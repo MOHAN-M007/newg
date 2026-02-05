@@ -1,2 +1,3 @@
 ﻿// Shared socket
-const socket = io();
+const socket = io("https://retro-new.onrender.com");
+
