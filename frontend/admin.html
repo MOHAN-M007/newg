@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Retro Arena - Admin</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body class="scanlines">
+  <div id="connStatus" class="conn">Connecting...</div>
+  <main class="center-wrap">
+    <section class="panel neon">
+      <h1 class="title">ADMIN</h1>
+      <p class="sub">Change a user password (admin only).</p>
+
+      <div class="block">
+        <label>Admin Key</label>
+        <input id="adminKey" type="password" placeholder="ADMIN KEY"/>
+      </div>
+
+      <div class="block">
+        <label>Target UID</label>
+        <input id="targetUid" type="text" placeholder="USER0001"/>
+      </div>
+
+      <div class="block">
+        <label>New Password</label>
+        <input id="newPass" type="text" placeholder="AB1234!!"/>
+        <small class="hint">Format: 2 letters + 4 digits + 2 symbols (!@#$%^&*)</small>
+      </div>
+
+      <div class="block">
+        <button id="changePass">Change Password</button>
+        <button id="backLobby">Back</button>
+      </div>
+
+      <div id="msg" class="msg"></div>
+    </section>
+  </main>
+
+  <script src="https://retro-new.onrender.com/socket.io/socket.io.js"></script>
+  <script src="socket.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
