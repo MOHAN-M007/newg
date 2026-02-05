@@ -2,7 +2,6 @@
 
 const { Server } = require("socket.io");
 const {
-  loginFirstTime,
   loginWithUID,
   logout,
   setSessionRoom,
@@ -10,7 +9,9 @@ const {
   isInMatch,
   getSession,
   updateGamerTag,
-  handleFirstLoginEmail
+  updateUID,
+  adminChangePassword,
+  isValidPassword
 } = require("./auth");
 
 const {
@@ -40,27 +41,7 @@ function initSocket(server) {
   const lastClickAt = new Map();
 
   io.on("connection", (socket) => {
-    socket.on("auth:first_login", async (payload, cb) => {
-      const email = String(payload.email || "").trim().toLowerCase();
-      if (!email || !email.includes("@")) return cb({ ok: false, error: "INVALID_EMAIL" });
-
-      const res = loginFirstTime(email);
-      if (!res.ok) return cb(res);
-
-      try {
-        await handleFirstLoginEmail(email, res.user.uid, res.password);
-        return cb({ ok: true, uid: res.user.uid, emailSent: true });
-      } catch (e) {
-        // Fallback: return credentials directly if email fails
-        console.error("[auth:first_login] Email send failed:", e && e.message ? e.message : e);
-        return cb({
-          ok: true,
-          uid: res.user.uid,
-          password: res.password,
-          emailSent: false
-        });
-      }
-    });
+    // Email-based first login removed. Users must use pre-provisioned UID + password.
 
     socket.on("auth:login", (payload, cb) => {
       const uid = String(payload.uid || "").trim().toUpperCase();
@@ -91,6 +72,33 @@ function initSocket(server) {
       if (!gamerTag) return cb({ ok: false, error: "INVALID_GAMERTAG" });
       updateGamerTag(uid, gamerTag);
       cb({ ok: true, gamerTag });
+    });
+
+    socket.on("profile:update_uid", (payload, cb) => {
+      const uid = socket.data.uid;
+      if (!uid) return cb({ ok: false, error: "UNAUTHENTICATED" });
+      const sess = getSession(uid);
+      if (sess && sess.roomCode) return cb({ ok: false, error: "LEAVE_ROOM_FIRST" });
+
+      const newUID = String(payload.newUID || "").trim().toUpperCase();
+      const res = updateUID(uid, newUID);
+      if (!res.ok) return cb(res);
+
+      socket.data.uid = res.uid;
+      cb({ ok: true, uid: res.uid });
+    });
+
+    socket.on("admin:change_password", (payload, cb) => {
+      const adminKey = String(payload.adminKey || "");
+      if (!process.env.ADMIN_KEY || adminKey !== process.env.ADMIN_KEY) {
+        return cb({ ok: false, error: "UNAUTHORIZED" });
+      }
+      const targetUID = String(payload.uid || "").trim().toUpperCase();
+      const newPassword = String(payload.newPassword || "");
+      if (!isValidPassword(newPassword)) return cb({ ok: false, error: "INVALID_PASSWORD_FORMAT" });
+      const res = adminChangePassword(targetUID, newPassword);
+      if (!res.ok) return cb(res);
+      cb({ ok: true });
     });
 
     socket.on("room:create", (payload, cb) => {

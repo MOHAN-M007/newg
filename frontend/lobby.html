@@ -30,6 +30,12 @@
         <input id="gamerTag" type="text" placeholder="Your GamerTag"/>
         <button id="saveTag">Save</button>
       </div>
+      
+      <div class="block">
+        <label>Edit UID</label>
+        <input id="newUid" type="text" placeholder="NEW UID (6-12 A-Z/0-9)"/>
+        <button id="saveUid">Save UID</button>
+      </div>
 
       <div class="block">
         <button id="logout">Logout</button>
@@ -75,6 +81,16 @@
         localStorage.setItem("gamerTag", res.gamerTag);
         userInfo.textContent = `UID: ${uid} | GamerTag: ${res.gamerTag}`;
         msg.textContent = "GamerTag updated.";
+      });
+    };
+
+    document.getElementById("saveUid").onclick = () => {
+      const newUID = document.getElementById("newUid").value.trim().toUpperCase();
+      socket.emit("profile:update_uid", { newUID }, (res) => {
+        if (!res.ok) return (msg.textContent = `Error: ${res.error}`);
+        localStorage.setItem("uid", res.uid);
+        userInfo.textContent = `UID: ${res.uid} | GamerTag: ${localStorage.getItem("gamerTag")}`;
+        msg.textContent = "UID updated. Use the new UID next login.";
       });
     };
 

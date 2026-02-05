@@ -3,8 +3,6 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-const { sendWelcomeEmail } = require("./mailer");
-
 const USERS_FILE = path.join(__dirname, "users.json");
 
 // In-memory session tracking (authoritative)
@@ -32,39 +30,8 @@ function generatePassword() {
 }
 
 function hashPassword(password, salt) {
-  const h = crypto.pbkdf2Sync(password, salt, 310000, 32, "sha256");
+  const h = crypto.pbkdf2Sync(password, salt, 10000, 32, "sha256");
   return h.toString("hex");
-}
-
-function createUser(email) {
-  const db = readUsers();
-  let uid;
-  do {
-    uid = generateUID();
-  } while (db.users.some(u => u.uid === uid));
-
-  const password = generatePassword();
-  const salt = crypto.randomBytes(16).toString("hex");
-  const passHash = hashPassword(password, salt);
-
-  const user = {
-    uid,
-    email: email.toLowerCase(),
-    passHash,
-    salt,
-    gamerTag: "New Challenger",
-    createdAt: new Date().toISOString()
-  };
-
-  db.users.push(user);
-  writeUsers(db);
-
-  return { user, password };
-}
-
-function findUserByEmail(email) {
-  const db = readUsers();
-  return db.users.find(u => u.email === email.toLowerCase()) || null;
 }
 
 function findUserByUID(uid) {
@@ -75,15 +42,6 @@ function findUserByUID(uid) {
 function verifyPassword(user, password) {
   const hash = hashPassword(password, user.salt);
   return crypto.timingSafeEqual(Buffer.from(hash, "hex"), Buffer.from(user.passHash, "hex"));
-}
-
-function loginFirstTime(email) {
-  const existing = findUserByEmail(email);
-  if (existing) {
-    return { ok: false, error: "EMAIL_ALREADY_REGISTERED" };
-  }
-  const { user, password } = createUser(email);
-  return { ok: true, user, password };
 }
 
 function loginWithUID(uid, password, socketId) {
@@ -131,12 +89,46 @@ function updateGamerTag(uid, gamerTag) {
   return true;
 }
 
-async function handleFirstLoginEmail(email, uid, password) {
-  await sendWelcomeEmail(email, uid, password);
+function isValidPassword(password) {
+  return /^[A-Za-z]{2}\d{4}[!@#$%^&*]{2}$/.test(password);
+}
+
+function isValidUID(uid) {
+  return /^[A-Z0-9]{6,12}$/.test(uid);
+}
+
+function updateUID(oldUID, newUID) {
+  const db = readUsers();
+  if (!isValidUID(newUID)) return { ok: false, error: "INVALID_UID" };
+  if (db.users.some(u => u.uid === newUID)) return { ok: false, error: "UID_TAKEN" };
+  const user = db.users.find(u => u.uid === oldUID);
+  if (!user) return { ok: false, error: "UID_NOT_FOUND" };
+
+  user.uid = newUID;
+  writeUsers(db);
+
+  const sess = activeSessions.get(oldUID);
+  if (sess) {
+    activeSessions.delete(oldUID);
+    activeSessions.set(newUID, sess);
+  }
+  return { ok: true, uid: newUID };
+}
+
+function adminChangePassword(uid, newPassword) {
+  if (!isValidPassword(newPassword)) return { ok: false, error: "INVALID_PASSWORD_FORMAT" };
+  const db = readUsers();
+  const user = db.users.find(u => u.uid === uid);
+  if (!user) return { ok: false, error: "UID_NOT_FOUND" };
+  const salt = crypto.randomBytes(16).toString("hex");
+  const passHash = hashPassword(newPassword, salt);
+  user.salt = salt;
+  user.passHash = passHash;
+  writeUsers(db);
+  return { ok: true };
 }
 
 module.exports = {
-  loginFirstTime,
   loginWithUID,
   logout,
   setSessionRoom,
@@ -144,5 +136,8 @@ module.exports = {
   isInMatch,
   getSession,
   updateGamerTag,
-  handleFirstLoginEmail
+  updateUID,
+  adminChangePassword,
+  isValidPassword,
+  isValidUID
 };

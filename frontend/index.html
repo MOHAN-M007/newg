@@ -11,13 +11,7 @@
   <main class="center-wrap">
     <section class="panel neon">
       <h1 class="title">RETRO ARENA</h1>
-      <p class="sub">Email-first login for new challengers.</p>
-
-      <div class="block">
-        <label>Email</label>
-        <input id="email" type="email" placeholder="you@domain.com"/>
-        <button id="firstLogin">First Login (Email Me)</button>
-      </div>
+      <p class="sub">Login with your UID and Password.</p>
 
       <div class="block">
         <label>UID</label>
@@ -34,25 +28,9 @@
   <script src="https://retro-new.onrender.com/socket.io/socket.io.js"></script>
   <script src="socket.js"></script>
   <script>
-    const emailEl = document.getElementById("email");
     const uidEl = document.getElementById("uid");
     const passEl = document.getElementById("password");
     const msg = document.getElementById("msg");
-
-    document.getElementById("firstLogin").onclick = () => {
-      const email = emailEl.value.trim();
-      if (!email) return (msg.textContent = "Enter a valid email.");
-      socket.emit("auth:first_login", { email }, (res) => {
-        if (!res.ok) return (msg.textContent = `Error: ${res.error}`);
-        if (res.password) {
-          uidEl.value = res.uid || "";
-          passEl.value = res.password || "";
-          msg.textContent = "Email failed. Your UID + Password are shown above. Save them now.";
-        } else {
-          msg.textContent = "Check your email for UID + Password.";
-        }
-      });
-    };
 
     document.getElementById("login").onclick = () => {
       const uid = uidEl.value.trim().toUpperCase();
