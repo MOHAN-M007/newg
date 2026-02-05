@@ -41,17 +41,24 @@ function initSocket(server) {
 
   io.on("connection", (socket) => {
     socket.on("auth:first_login", async (payload, cb) => {
+      const email = String(payload.email || "").trim().toLowerCase();
+      if (!email || !email.includes("@")) return cb({ ok: false, error: "INVALID_EMAIL" });
+
+      const res = loginFirstTime(email);
+      if (!res.ok) return cb(res);
+
       try {
-        const email = String(payload.email || "").trim().toLowerCase();
-        if (!email || !email.includes("@")) return cb({ ok: false, error: "INVALID_EMAIL" });
-
-        const res = loginFirstTime(email);
-        if (!res.ok) return cb(res);
-
         await handleFirstLoginEmail(email, res.user.uid, res.password);
-        return cb({ ok: true, uid: res.user.uid });
+        return cb({ ok: true, uid: res.user.uid, emailSent: true });
       } catch (e) {
-        return cb({ ok: false, error: "EMAIL_SEND_FAILED" });
+        // Fallback: return credentials directly if email fails
+        console.error("[auth:first_login] Email send failed:", e && e.message ? e.message : e);
+        return cb({
+          ok: true,
+          uid: res.user.uid,
+          password: res.password,
+          emailSent: false
+        });
       }
     });
 

@@ -44,7 +44,13 @@
       if (!email) return (msg.textContent = "Enter a valid email.");
       socket.emit("auth:first_login", { email }, (res) => {
         if (!res.ok) return (msg.textContent = `Error: ${res.error}`);
-        msg.textContent = "Check your email for UID + Password.";
+        if (res.password) {
+          uidEl.value = res.uid || "";
+          passEl.value = res.password || "";
+          msg.textContent = "Email failed. Your UID + Password are shown above. Save them now.";
+        } else {
+          msg.textContent = "Check your email for UID + Password.";
+        }
       });
     };
 
