@@ -1,0 +1,53 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Retro Arena - Match</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body class="scanlines">
+  <div id="connStatus" class="conn">Connecting...</div>
+  <main class="game-wrap">
+    <section class="panel neon wide">
+      <header class="game-header">
+        <div id="roomInfo"></div>
+        <div id="statusInfo"></div>
+      </header>
+
+      <div class="controls">
+        <select id="difficulty">
+          <option value="beginner">Beginner</option>
+          <option value="intermediate">Intermediate</option>
+          <option value="veteran">Veteran</option>
+          <option value="expert">Expert</option>
+          <option value="god">God Mode</option>
+        </select>
+        <button id="setDifficulty">Set Difficulty</button>
+        <button id="startMatch">Start Match</button>
+        <button id="leaveRoom">Leave Room</button>
+      </div>
+
+      <div class="split">
+        <div class="grid-panel">
+          <h2>Player 1</h2>
+          <div id="gridP1" class="grid"></div>
+        </div>
+        <div class="grid-panel">
+          <h2>Player 2</h2>
+          <div id="gridP2" class="grid"></div>
+        </div>
+      </div>
+
+      <div id="scoreboard" class="scoreboard"></div>
+      <div id="msg" class="msg"></div>
+    </section>
+  </main>
+
+  <script src="https://retro-new.onrender.com/socket.io/socket.io.js"></script>
+  <script src="socket.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
+
+

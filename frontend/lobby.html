@@ -1,0 +1,91 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Retro Arena - Lobby</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body class="scanlines">
+  <div id="connStatus" class="conn">Connecting...</div>
+  <main class="center-wrap">
+    <section class="panel neon">
+      <h1 class="title">LOBBY</h1>
+      <p id="userInfo" class="sub"></p>
+
+      <div class="block">
+        <label>Create Room</label>
+        <input id="roomName" type="text" placeholder="Arcade Room Name"/>
+        <button id="createRoom">Create Room</button>
+      </div>
+
+      <div class="block">
+        <label>Join Room</label>
+        <input id="roomCode" type="text" placeholder="ROOM CODE"/>
+        <button id="joinRoom">Join Room</button>
+      </div>
+
+      <div class="block">
+        <label>Edit GamerTag</label>
+        <input id="gamerTag" type="text" placeholder="Your GamerTag"/>
+        <button id="saveTag">Save</button>
+      </div>
+
+      <div class="block">
+        <button id="logout">Logout</button>
+      </div>
+
+      <div id="msg" class="msg"></div>
+    </section>
+  </main>
+
+  <script src="https://retro-new.onrender.com/socket.io/socket.io.js"></script>
+  <script src="socket.js"></script>
+  <script>
+    const msg = document.getElementById("msg");
+    const userInfo = document.getElementById("userInfo");
+    const uid = localStorage.getItem("uid");
+    const gamerTag = localStorage.getItem("gamerTag");
+
+    if (!uid) window.location.href = "index.html";
+    userInfo.textContent = `UID: ${uid} | GamerTag: ${gamerTag}`;
+
+    document.getElementById("createRoom").onclick = () => {
+      const name = document.getElementById("roomName").value.trim() || "Arcade Room";
+      socket.emit("room:create", { name }, (res) => {
+        if (!res.ok) return (msg.textContent = `Error: ${res.error}`);
+        localStorage.setItem("roomCode", res.room.code);
+        window.location.href = "game.html";
+      });
+    };
+
+    document.getElementById("joinRoom").onclick = () => {
+      const code = document.getElementById("roomCode").value.trim().toUpperCase();
+      socket.emit("room:join", { code }, (res) => {
+        if (!res.ok) return (msg.textContent = `Error: ${res.error}`);
+        localStorage.setItem("roomCode", res.room.code);
+        window.location.href = "game.html";
+      });
+    };
+
+    document.getElementById("saveTag").onclick = () => {
+      const gamerTag = document.getElementById("gamerTag").value.trim();
+      socket.emit("profile:update", { gamerTag }, (res) => {
+        if (!res.ok) return (msg.textContent = `Error: ${res.error}`);
+        localStorage.setItem("gamerTag", res.gamerTag);
+        userInfo.textContent = `UID: ${uid} | GamerTag: ${res.gamerTag}`;
+        msg.textContent = "GamerTag updated.";
+      });
+    };
+
+    document.getElementById("logout").onclick = () => {
+      socket.emit("auth:logout", {}, () => {
+        localStorage.clear();
+        window.location.href = "index.html";
+      });
+    };
+  </script>
+</body>
+</html>
+
+

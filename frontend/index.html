@@ -1,0 +1,66 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Retro Arena - Login</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body class="scanlines">
+  <div id="connStatus" class="conn">Connecting...</div>
+  <main class="center-wrap">
+    <section class="panel neon">
+      <h1 class="title">RETRO ARENA</h1>
+      <p class="sub">Email-first login for new challengers.</p>
+
+      <div class="block">
+        <label>Email</label>
+        <input id="email" type="email" placeholder="you@domain.com"/>
+        <button id="firstLogin">First Login (Email Me)</button>
+      </div>
+
+      <div class="block">
+        <label>UID</label>
+        <input id="uid" type="text" placeholder="YOUR UID"/>
+        <label>Password</label>
+        <input id="password" type="password" placeholder="YOUR PASSWORD"/>
+        <button id="login">Login</button>
+      </div>
+
+      <div id="msg" class="msg"></div>
+    </section>
+  </main>
+
+  <script src="https://retro-new.onrender.com/socket.io/socket.io.js"></script>
+  <script src="socket.js"></script>
+  <script>
+    const emailEl = document.getElementById("email");
+    const uidEl = document.getElementById("uid");
+    const passEl = document.getElementById("password");
+    const msg = document.getElementById("msg");
+
+    document.getElementById("firstLogin").onclick = () => {
+      const email = emailEl.value.trim();
+      if (!email) return (msg.textContent = "Enter a valid email.");
+      socket.emit("auth:first_login", { email }, (res) => {
+        if (!res.ok) return (msg.textContent = `Error: ${res.error}`);
+        msg.textContent = "Check your email for UID + Password.";
+      });
+    };
+
+    document.getElementById("login").onclick = () => {
+      const uid = uidEl.value.trim().toUpperCase();
+      const password = passEl.value;
+      if (!uid || !password) return (msg.textContent = "UID + Password required.");
+      socket.emit("auth:login", { uid, password }, (res) => {
+        if (!res.ok) return (msg.textContent = `Error: ${res.error}`);
+        localStorage.setItem("uid", res.user.uid);
+        localStorage.setItem("gamerTag", res.user.gamerTag);
+        window.location.href = "lobby.html";
+      });
+    };
+  </script>
+</body>
+</html>
+
+
